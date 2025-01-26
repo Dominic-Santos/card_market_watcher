@@ -34,6 +34,9 @@ def save_json(json_file: str, data: dict):
 def get_sleep_time() -> int:
     return SLEEP_TIME + random.randint(0, 10)
 
+def get_wait_time() -> int:
+    return WAIT_TIME_MINS * 60
+
 def pc_alert(msg: str, title: str, link: str=""):
     def walert():
         if link == "":
@@ -62,3 +65,11 @@ def create_logger(name, filename="log.txt"):
     logger.addHandler(handler)
     logger.addHandler(screen_handler)
     return logger
+
+def pretty_price(price):
+    leading = "" if price >= 10 else "0"
+    if "." not in str(price):
+        following = ".00"
+    else:
+        following = "" if len(str(price).split(".")[1]) == 2 else "0"
+    return f"{leading}{price}{following}"
