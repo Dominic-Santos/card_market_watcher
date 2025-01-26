@@ -14,7 +14,7 @@ class TestCard(unittest.TestCase):
             "any_version": True
         }
         card = Card("testcard", fields)
-        self.assertEqual(card.link, "http://example.com")
+        self.assertEqual(card.links[0], "http://example.com")
         self.assertEqual(card.note, "Test note")
         self.assertEqual(card.alert, 1)
         self.assertEqual(card.product, "Pokemon")
@@ -28,20 +28,20 @@ class TestCard(unittest.TestCase):
         fields = {
             "link": "http://example.com"
         }
-        card = Card("testname", fields)
-        self.assertEqual(card.link, "http://example.com")
+        card = Card("testcard", fields)
+        self.assertEqual(card.links[0], "http://example.com")
         self.assertEqual(card.note, "")
         self.assertEqual(card.alert, 0)
         self.assertEqual(card.product, "Digimon")
         self.assertEqual(card.condition, "2")
         self.assertEqual(card.language, "1")
-        self.assertEqual(card.channels, [])
+        self.assertEqual(card.channels, ["default"])
         self.assertFalse(card.any_version)
         self.assertEqual(card.name, "testcard")
     
     def test_card_to_dict(self):
         fields = {
-            "link": "http://example.com",
+            "links": ["http://example.com"],
             "note": "Test note",
             "alert": 1,
             "product": "Pokemon",

@@ -1,11 +1,12 @@
-from src.CardDatabase import CardDatabase
+from time import sleep
+from src.MarketWatcher import MarketWatcher
 
 
 def main():
     print("Hello, World!")
-    database = CardDatabase()
-    database.load_cards()
-    database.save_cards()
+    watcher = MarketWatcher()
+    watcher.send_alert(title="Hello", message="World", alert=["discord", "pc"], link="http://example.com")
+    sleep(5)
 
 if __name__ == "__main__":
     main()

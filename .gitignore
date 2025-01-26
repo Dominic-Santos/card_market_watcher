@@ -2,7 +2,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-data/
 
 # C extensions
 *.so
@@ -170,3 +169,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# project specific ignore
+data/
+logs/
