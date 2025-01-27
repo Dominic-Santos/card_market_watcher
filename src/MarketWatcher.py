@@ -143,7 +143,7 @@ class MarketWatcher():
         
             sleep(get_sleep_time())
 
-            self.logger.info("Run Done")
+        self.logger.info("Run Done")
 
     def single_run(self):
         driver = webdriver.Chrome(options=CHROME_OPTIONS)
