@@ -26,3 +26,10 @@ class Config:
     @property
     def discord_channels(self):
         return self._config["discord_channels"]
+
+    @property
+    def discord_channel_names(self):
+        return list(self._config["discord_channels"].keys())
+
+    def discord_channel_by_name(self, name: str):
+        return self._config["discord_channels"][name]

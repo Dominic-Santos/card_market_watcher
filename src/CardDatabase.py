@@ -8,8 +8,15 @@ class CardDatabase():
             "data": data_file,
         }
         self.cards = []
+        self.load_all()
+
+    def load_all(self):
         self.load_cards()
         self.load_data()
+
+    def save_all(self):
+        self.save_cards()
+        self.save_data()
     
     def load_cards(self):
         raw_cards = load_json(self.files["cards"])
@@ -28,8 +35,22 @@ class CardDatabase():
     def load_data(self):
         raw_data = load_json(self.files["data"])
         for card in self.cards:
-            card.data = raw_data.get(card.name, [])
+            card.data = raw_data.get(card.name, {}).get("data", {})
     
     def save_data(self):
-        raw_data = {card.name: card.data for card in self.cards}
+        raw_data = {card.name: {"data": card.data} for card in self.cards}
         save_json(self.files["data"], raw_data)
+    
+    @property
+    def longest_card_name(self):
+        if len(self.cards) == 0:
+            return 0
+        return max(len(card.name) for card in self.cards)
+    
+    def sort_cards(self):
+        self.cards.sort(key=lambda card: card.order)
+    
+    @property
+    def card_names(self):
+        return [card.name for card in self.cards]
+

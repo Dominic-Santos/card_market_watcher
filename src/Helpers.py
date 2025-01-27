@@ -7,6 +7,7 @@ import win32con
 import webbrowser
 import logging
 from threading import Thread
+from datetime import datetime
 
 WAIT_TIME_MINS = 15
 SLEEP_TIME = 60
@@ -73,3 +74,6 @@ def pretty_price(price):
     else:
         following = "" if len(str(price).split(".")[1]) == 2 else "0"
     return f"{leading}{price}{following}"
+
+def get_formatted_time():
+    return ":".join(str(datetime.now()).split(":")[:2])
