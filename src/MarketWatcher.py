@@ -29,7 +29,8 @@ class MarketWatcher():
     def send_alert(self, title: str = "title", message: str = "message", alert: list = [], channels: list = ["default"], link: str = ""):
         if "discord" in alert:
             for channel in channels:
-                ok = self.discord.send_message(message, self.config.discord_channel_by_name(channel))
+                msg = message if link == "" else f"{message}\n{link}"
+                ok = self.discord.send_message(msg, self.config.discord_channel_by_name(channel))
                 if not ok:
                     self.logger.error("Failed to send discord message")
         if "pc" in alert:
