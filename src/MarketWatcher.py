@@ -129,7 +129,7 @@ class MarketWatcher():
                     compare = "Down"
                 else:
                     compare = " Up "
-                print("HERERRER", card.data)
+
                 card.data[get_formatted_time()] = new_prices
                 to_log = "{start} | {compare} | Min {new_mininum}, Avg {new_average}".format(
                     start=to_log,
