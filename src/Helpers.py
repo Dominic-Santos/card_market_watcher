@@ -38,7 +38,7 @@ def get_sleep_time() -> int:
 def get_wait_time() -> int:
     return WAIT_TIME_MINS * 60
 
-def pc_alert(msg: str, title: str, link: str=""):
+def pc_alert(title: str, msg: str, link: str=""):
     def walert():
         if link == "":
             win32api.MessageBox(0, msg, title, 0x00001000)
