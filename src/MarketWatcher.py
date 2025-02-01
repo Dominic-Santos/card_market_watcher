@@ -158,7 +158,7 @@ class MarketWatcher():
             padding = " " * (longest_card - len(card.name))
 
             new_prices = None
-            for card_link in card.links:
+            for i, card_link in enumerate(card.links):
                 cm_url = self.create_cardmarket_link(card.product, card_link, card.language, card.condition, card.seller_location)
                 try:
                     prices = self.get_card_market_values(driver, cm_url)
@@ -177,6 +177,9 @@ class MarketWatcher():
                     # msg = "-- Script Error - {} - {} -- {} --".format(card, str(e), traceback.format_exc())
                     sleep(get_sleep_time() * 3)
                     continue
+                
+                if i + 1 < len(card.links):
+                    sleep(get_sleep_time())
             if prices is None:
                 continue
 
