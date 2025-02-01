@@ -137,10 +137,10 @@ class MarketWatcher():
     def create_cardmarket_link(product: str, card: str, language: str, condition: str, seller_location: str):
         if "/" in card:
             # single version of the card
-            url = f"https://www.cardmarket.com/en/{product}/Cards/{card}?minCondition={condition}&sellerCountry={seller_location}"
+            url = f"https://www.cardmarket.com/en/{product}/Products/Singles/{card}?minCondition={condition}&sellerCountry={seller_location}"
         else:
             # any version of the card
-            url = f"https://www.cardmarket.com/en/{product}/Products/Singles/{card}?minCondition={condition}&sellerCountry={seller_location}"
+            url = f"https://www.cardmarket.com/en/{product}/Cards/{card}?minCondition={condition}&sellerCountry={seller_location}"
         
         if language != "any":
             url += f"&language={language}"
