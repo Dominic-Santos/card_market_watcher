@@ -1,9 +1,3 @@
-ALERTS = {
-    0: [],
-    1: ["pc", "discord"],
-    2: ["discord"],
-}
-
 class Card():
     def __init__(self, cardname: str, fields: dict):
         self.name = cardname
@@ -15,7 +9,7 @@ class Card():
             raise ValueError("Card must have at least one link")
 
         self.note = fields.get("note", "")
-        self._alert = fields.get("alert", 0)
+        self.alert = fields.get("alert", [])
         self.product = fields.get("product", "Digimon")
         self.condition = fields.get("condition", "2")
         self.language = fields.get("language", "1")
@@ -52,9 +46,3 @@ class Card():
         if len(self.data) == 0:
             return 0
         return min([entry["min"] for entry in self.data.values()])
-
-    @property
-    def alert(self):
-        if type(self._alert) == list:
-            return self._alert
-        return ALERTS.get(self._alert, [])

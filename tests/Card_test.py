@@ -6,7 +6,7 @@ class TestCard(unittest.TestCase):
         fields = {
             "link": "http://example.com",
             "note": "Test note",
-            "alert": 1,
+            "alert": ["pc", "discord"],
             "product": "Pokemon",
             "condition": "1",
             "language": "2",
@@ -15,9 +15,9 @@ class TestCard(unittest.TestCase):
             "seller": "1"
         }
         card = Card("testcard", fields)
-        self.assertEqual(card.links[0], "http://example.com")
+        self.assertEqual(card.links, ["http://example.com"])
         self.assertEqual(card.note, "Test note")
-        self.assertEqual(card.alert, 1)
+        self.assertEqual(card.alert, ["pc", "discord"])
         self.assertEqual(card.product, "Pokemon")
         self.assertEqual(card.condition, "1")
         self.assertEqual(card.language, "2")
@@ -31,9 +31,9 @@ class TestCard(unittest.TestCase):
             "link": "http://example.com"
         }
         card = Card("testcard", fields)
-        self.assertEqual(card.links[0], "http://example.com")
+        self.assertEqual(card.links, ["http://example.com"])
         self.assertEqual(card.note, "")
-        self.assertEqual(card.alert, 0)
+        self.assertEqual(card.alert, [])
         self.assertEqual(card.product, "Digimon")
         self.assertEqual(card.condition, "2")
         self.assertEqual(card.language, "1")
@@ -46,7 +46,7 @@ class TestCard(unittest.TestCase):
         fields = {
             "links": ["http://example.com"],
             "note": "Test note",
-            "alert": 1,
+            "alert": ["pc", "discord"],
             "product": "Pokemon",
             "condition": "1",
             "language": "2",
