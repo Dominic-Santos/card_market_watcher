@@ -38,7 +38,7 @@ def get_sleep_time() -> int:
 def get_wait_time() -> int:
     return WAIT_TIME_MINS * 60
 
-def pc_alert(title: str, msg: str, link: str=""):
+def pc_alert(title: str, msg: str, link: str=""):  # pragma: no cover
     def walert():
         if link == "":
             win32api.MessageBox(0, msg, title, 0x00001000)
@@ -68,12 +68,14 @@ def create_logger(name, filename="log.txt"):
     return logger
 
 def pretty_price(price):
+    str_price = str(price)
     leading = "" if price >= 10 else "0"
-    if "." not in str(price):
+    if "." not in str_price:
         following = ".00"
     else:
-        following = "" if len(str(price).split(".")[1]) == 2 else "0"
-    return f"{leading}{price}{following}"
+        following = "" if len(str_price.split(".")[1]) >= 2 else "0"
+        str_price = str_price[:str_price.index(".") + 3]
+    return f"{leading}{str_price}{following}"
 
 def get_formatted_time():
     return ":".join(str(datetime.now()).split(":")[:2])
