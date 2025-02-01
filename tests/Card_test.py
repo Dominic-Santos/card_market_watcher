@@ -53,5 +53,59 @@ class TestCard(unittest.TestCase):
         card = Card("testname", fields)
         self.assertEqual(card.to_dict(), fields)
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_missing_link_raises_error(self):
+        fields = {}
+        with self.assertRaises(ValueError):
+            Card("testname", fields)
+
+        
+    def test_order(self):
+        fields = {
+            "link": "http://example.com",
+            "product": "Magic"
+        }
+        card = Card("testname", fields)
+        self.assertEqual(card.order, 0)
+
+        fields = {
+            "link": "http://example.com",
+            "product": "Digimon"
+        }
+        card = Card("testname", fields)
+        self.assertEqual(card.order, 1)
+
+        fields = {
+            "link": "http://example.com",
+            "product": "Yugioh"
+        }
+        card = Card("testname", fields)
+        self.assertEqual(card.order, 9)
+    
+    def test_last_data(self):
+        fields = {
+            "link": "http://example.com",
+        }
+        card = Card("testname", fields)
+        self.assertEqual(card.last_data, {"min": 0, "avg": 0})
+
+        card.data = {
+            "2021-01-01": {"min": 1, "avg": 2},
+            "2021-01-02": {"min": 2, "avg": 3},
+            "2021-01-03": {"min": 3, "avg": 4},
+        }
+        self.assertEqual(card.last_data, {"min": 3, "avg": 4})
+    
+    def test_min_data(self):
+        fields = {
+            "link": "http://example.com",
+        }
+        card = Card("testname", fields)
+        self.assertEqual(card.min_data, 0)
+
+        card.data = {
+            "2021-01-01": {"min": 1, "avg": 2},
+            "2021-01-02": {"min": 2, "avg": 3},
+            "2021-01-03": {"min": 3, "avg": 4},
+        }
+        self.assertEqual(card.min_data, 1)
+    
