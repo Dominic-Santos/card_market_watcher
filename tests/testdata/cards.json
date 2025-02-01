@@ -1,0 +1,36 @@
+{
+    "testcard": {
+        "links": [
+            "http://example.com"
+        ],
+        "note": "Test note",
+        "alert": [
+            "pc",
+            "discord"
+        ],
+        "product": "Pokemon",
+        "condition": "1",
+        "language": "2",
+        "channels": [
+            "default"
+        ],
+        "seller": "1"
+    },
+    "testcard2": {
+        "links": [
+            "http://example.com"
+        ],
+        "note": "Test note",
+        "alert": [
+            "pc",
+            "discord"
+        ],
+        "product": "Magic",
+        "condition": "1",
+        "language": "2",
+        "channels": [
+            "default"
+        ],
+        "seller": "1"
+    }
+}

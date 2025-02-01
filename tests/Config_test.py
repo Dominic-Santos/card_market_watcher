@@ -1,9 +1,11 @@
 import unittest
 from src.Config import Config
+from unittest.mock import patch
+
 
 class TestConfig(unittest.TestCase):
     
-    @unittest.mock.patch("src.Config.load_json")
+    @patch("src.Config.load_json")
     def test_config(self, mock_load_json):
         mock_load_json.return_value = {
             "discord_token": "test_token",
