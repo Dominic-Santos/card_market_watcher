@@ -77,11 +77,14 @@ class MarketWatcher():
                     xpath_prefix = '//div[@id="tabContent-info"]/div/div[@class="col-12 col-lg-6 mx-auto"]/div/div[2]/dl/'
                     check = driver.find_element(By.XPATH, xpath_prefix + 'dt[4]').get_attribute("innerHTML").strip()
                     if check.lower() == "available items":
-                        version_path = xpath_prefix + 'dd[2]/div/a[2]'
+                        version_path = xpath_prefix + 'dd[2]/div/a'
                         trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[6]/span').get_attribute("innerHTML").strip()
                     else:
-                        version_path = xpath_prefix + 'dd[3]/div/a[2]'
+                        version_path = xpath_prefix + 'dd[3]/div/a'
                         trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[7]/span').get_attribute("innerHTML").strip()
+
+                    if "/Magic/" in cm_url:
+                        version_path += "[2]"
                     
                     # price min
                     from_price_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div[1]/div[1]/div[1]/span'
