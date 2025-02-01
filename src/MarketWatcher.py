@@ -133,6 +133,20 @@ class MarketWatcher():
             "language": card_language
         }
 
+    @staticmethod
+    def create_cardmarket_link(product: str, card: str, language: str, condition: str, seller_location: str):
+        if "/" in card:
+            # single version of the card
+            url = f"https://www.cardmarket.com/en/{product}/Cards/{card}?minCondition={condition}&sellerCountry={seller_location}"
+        else:
+            # any version of the card
+            url = f"https://www.cardmarket.com/en/{product}/Products/Singles/{card}?minCondition={condition}&sellerCountry={seller_location}"
+        
+        if language != "any":
+            url += f"&language={language}"
+        
+        return url
+
     def single_run_main(self, driver):
         longest_card = self.card_db.longest_card_name
         self.card_db.sort_cards()
@@ -145,7 +159,7 @@ class MarketWatcher():
 
             new_prices = None
             for card_link in card.links:
-                cm_url = f"https://www.cardmarket.com/en/{card.product}/Products/Singles/{card_link}?language={card.language}&minCondition={card.condition}&sellerCountry={card.seller_location}"
+                cm_url = self.create_cardmarket_link(card.product, card_link, card.language, card.condition, card.seller_location)
                 try:
                     prices = self.get_card_market_values(driver, cm_url)
                     if prices["min"] == 0:

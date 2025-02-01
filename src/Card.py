@@ -12,7 +12,7 @@ class Card():
         self.alert = fields.get("alert", [])
         self.product = fields.get("product", "Digimon")
         self.condition = fields.get("condition", "2")
-        self.language = fields.get("language", "1")
+        self.language = fields.get("language", "any").lower()
         self.channels = fields.get("channels", ["default"])
         self.seller_location = fields.get("seller", "1,2,3,33,35,5,6,8,9,11,12,7,14,15,37,16,17,36,21,18,19,20,22,23,24,25,26,27,29,31,30,10,28,4")
         self.data = {}
