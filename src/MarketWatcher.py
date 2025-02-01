@@ -43,17 +43,68 @@ class MarketWatcher():
                 driver.get(cm_url)
                 sleep(0.5)
                 
-                xpath_prefix = '//*[@id="tabContent-info"]/div/div[@class="col-12 col-lg-6 mx-auto"]/div/div[2]/dl/'
-                check = driver.find_element(By.XPATH, xpath_prefix + 'dt[4]').get_attribute("innerHTML").strip()
-                if check.lower() == "available items":
-                    trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[6]/span').get_attribute("innerHTML").strip()
-                    from_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[5]').get_attribute("innerHTML").strip()
+                if "/Cards/" in cm_url:
+                    # any version of the card
+
+                    # trend price
+                    trend_price_path = '//div[contains(@class, "infoContainer")]/dl/dd[4]/span'
+                    trend_price = driver.find_element(By.XPATH, trend_price_path).get_attribute("innerHTML").strip()
+
+                    # price min
+                    from_price_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[4]/div[1]/div/div/span'
+                    from_price = driver.find_element(By.XPATH, from_price_path).get_attribute("innerHTML").strip()
+
+                    # seller location country
+                    seller_location_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div[1]/div[1]/span/span/span[2]'
+                    seller_location = driver.find_element(By.XPATH, seller_location_path).get_attribute("aria-label").split(": ")[1].strip()
+
+                    # version of the card
+                    version_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div/div[2]/div/div/a[1]'
+                    version = driver.find_element(By.XPATH, version_path).get_attribute("aria-label").strip()
+
+                    # card condition
+                    card_condition_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div/div[2]/div/div/a[2]'
+                    card_condition = driver.find_element(By.XPATH, card_condition_path).get_attribute("data-bs-original-title").strip()
+
+                    # card language
+                    card_language_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div/div[2]/div/div/span'
+                    card_language = driver.find_element(By.XPATH, card_language_path).get_attribute("aria-label").strip()
+
                 else:
-                    trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[7]/span').get_attribute("innerHTML").strip()
-                    from_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[6]').get_attribute("innerHTML").strip()
+                    # single version of card
+
+                    # trend price
+                    xpath_prefix = '//div[@id="tabContent-info"]/div/div[@class="col-12 col-lg-6 mx-auto"]/div/div[2]/dl/'
+                    check = driver.find_element(By.XPATH, xpath_prefix + 'dt[4]').get_attribute("innerHTML").strip()
+                    if check.lower() == "available items":
+                        version_path = xpath_prefix + 'dd[2]/div/a[2]'
+                        trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[6]/span').get_attribute("innerHTML").strip()
+                    else:
+                        version_path = xpath_prefix + 'dd[3]/div/a[2]'
+                        trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[7]/span').get_attribute("innerHTML").strip()
+                    
+                    # price min
+                    from_price_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div[1]/div[1]/div[1]/span'
+                    from_price = driver.find_element(By.XPATH, from_price_path).get_attribute("innerHTML").strip()
+
+                    # version of the card
+                    version = driver.find_element(By.XPATH, version_path).get_attribute("innerHTML").strip()
+
+                    # seller location country
+                    seller_location_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[2]/div[1]/div[1]/span/span/span[2]'
+                    seller_location = driver.find_element(By.XPATH, seller_location_path).get_attribute("aria-label").split(": ")[1].strip()
+
+                    # card condition
+                    card_condition_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[2]/div[1]/div[2]/div/div[1]/a'
+                    card_condition = driver.find_element(By.XPATH, card_condition_path).get_attribute("data-bs-original-title").strip()
+
+                    # card language
+                    card_language_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[2]/div[1]/div[2]/div/div[1]/span'
+                    card_language = driver.find_element(By.XPATH, card_language_path).get_attribute("aria-label").strip()
 
             except Exception as e:
                 print("get price exception", e)
+                print(traceback.format_exc())
                 if i < retry_limit:
                     sleep(get_sleep_time())
                     continue
@@ -70,7 +121,14 @@ class MarketWatcher():
         if from_price not in ["", "N/A"]:
             min_price = float(from_price.split(" ")[0].replace(".", "").replace(",", "."))
 
-        return {"min": min_price, "avg": avg_price}
+        return {
+            "min": min_price,
+            "avg": avg_price,
+            "seller_location": seller_location,
+            "version": version,
+            "condition": card_condition,
+            "language": card_language
+        }
 
     def single_run_main(self, driver):
         longest_card = self.card_db.longest_card_name
@@ -81,20 +139,30 @@ class MarketWatcher():
 
         for card in self.card_db.cards:
             padding = " " * (longest_card - len(card.name))
-            cm_url = f"https://www.cardmarket.com/en/{card.product}/Products/Singles/{card.links[0]}?language={card.language}&minCondition={card.condition}&sellerCountry={card.seller_location}"
-            try:
-                new_prices = self.get_card_market_values(driver, cm_url)
-                if new_prices["min"] == 0:
-                    raise Exception("no price found")
-            except KeyboardInterrupt:
-                self.running = False
-                return
-            except Exception as e:
-                self.logger.info(f"{card.name}{padding} | Failed {str(e)}")
-                # msg = "-- Script Error - {} - {} -- {} --".format(card, str(e), traceback.format_exc())
-                sleep(get_sleep_time() * 3)
+
+            new_prices = None
+            for card_link in card.links:
+                cm_url = f"https://www.cardmarket.com/en/{card.product}/Products/Singles/{card_link}?language={card.language}&minCondition={card.condition}&sellerCountry={card.seller_location}"
+                try:
+                    prices = self.get_card_market_values(driver, cm_url)
+                    if prices["min"] == 0:
+                        raise Exception("no price found")
+
+                    if new_prices is None:
+                        new_prices = prices
+                    elif prices["min"] < new_prices["min"]:
+                        new_prices = prices
+                except KeyboardInterrupt:
+                    self.running = False
+                    return
+                except Exception as e:
+                    self.logger.info(f"{card.name}{padding} | Failed {str(e)}")
+                    # msg = "-- Script Error - {} - {} -- {} --".format(card, str(e), traceback.format_exc())
+                    sleep(get_sleep_time() * 3)
+                    continue
+            if prices is None:
                 continue
-            
+
             last_prices = card.last_data
             min_price = card.min_data
 
@@ -118,6 +186,7 @@ class MarketWatcher():
                         msg += ", lowest seen" if new_prices["min"] == min_price else ", NEW LOWEST!!!"
 
                     msg += f"\n(lowest seen: {min_price})"
+                    msg += f"\n{new_prices['version']}\n[{new_prices['condition']}] {new_prices['language']} from {new_prices['seller_location']}"
                     self.send_alert(
                         "market watcher",
                         msg,
@@ -131,7 +200,10 @@ class MarketWatcher():
                 else:
                     compare = " Up "
 
-                card.data[get_formatted_time()] = new_prices
+                card.data[get_formatted_time()] = {
+                    "min": new_prices["min"],
+                    "avg": new_prices["avg"],
+                }
                 to_log = "{start} | {compare} | Min {new_mininum}, Avg {new_average}".format(
                     start=to_log,
                     compare=compare,
@@ -147,8 +219,8 @@ class MarketWatcher():
         self.logger.info("Run Done")
 
     def single_run(self):
-        driver = webdriver.Chrome(options=CHROME_OPTIONS)
         try:
+            driver = webdriver.Chrome(options=CHROME_OPTIONS)
             self.reload_db()
             self.single_run_main(driver)
         except KeyboardInterrupt:
