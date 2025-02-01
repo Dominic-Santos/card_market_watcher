@@ -33,8 +33,10 @@ class DiscordAPI(object):
             r = requests.get(url, headers=self.get_headers())
             data = r.json()
             return data
+        return False
 
     def delete(self, url):
         if self.check_can_send():
             r = requests.delete(url, headers=self.get_headers())
             return r.status_code == 204  # all went good
+        return False

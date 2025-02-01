@@ -57,8 +57,7 @@ class TestCard(unittest.TestCase):
         fields = {}
         with self.assertRaises(ValueError):
             Card("testname", fields)
-
-        
+ 
     def test_order(self):
         fields = {
             "link": "http://example.com",
