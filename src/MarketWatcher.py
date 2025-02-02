@@ -69,7 +69,8 @@ class MarketWatcher():
                 version = driver.find_element(By.XPATH, xpath.card_version[0]).get_attribute(xpath.card_version[1]).strip()
                 card_condition = driver.find_element(By.XPATH, xpath.card_condition[0]).get_attribute(xpath.card_condition[1]).strip()
                 card_language = driver.find_element(By.XPATH, xpath.card_language[0]).get_attribute(xpath.card_language[1]).strip()
-
+            except KeyboardInterrupt:
+                return None
             except Exception as e:
                 print("get price exception", e)
                 print(traceback.format_exc())
@@ -99,7 +100,8 @@ class MarketWatcher():
             "seller_location": seller_location,
             "version": version,
             "condition": card_condition,
-            "language": card_language
+            "language": card_language,
+            "url": cm_url
         }
 
     @staticmethod
@@ -118,6 +120,27 @@ class MarketWatcher():
             url += f"&minCondition={condition}"
         
         return url
+    
+    def get_card_values(self, driver, card) -> dict:
+        new_prices = None
+        for i, card_link in enumerate(card.links):
+            cm_url = self.create_cardmarket_link(card.product, card_link, card.language, card.condition, card.seller_location)
+
+            prices = self.get_card_market_values(driver, cm_url)
+            if prices is None:
+                self.running = False
+                return
+            if prices["min"] == 0:
+                raise Exception("no price found")
+
+            if new_prices is None:
+                new_prices = prices
+            elif prices["min"] <= new_prices["min"]:
+                new_prices = prices
+
+            if i + 1 < len(card.links):
+                sleep(get_sleep_time())
+        return new_prices
 
     def single_run_main(self, driver):
         longest_card = self.card_db.longest_card_name
@@ -127,33 +150,9 @@ class MarketWatcher():
         self.logger.info(f"{cards}, {len(cards)}")
 
         for card in self.card_db.cards:
-            padding = " " * (longest_card - len(card.name))
-
-            new_prices = None
-            for i, card_link in enumerate(card.links):
-                cm_url = self.create_cardmarket_link(card.product, card_link, card.language, card.condition, card.seller_location)
-                try:
-                    prices = self.get_card_market_values(driver, cm_url)
-                    if prices["min"] == 0:
-                        raise Exception("no price found")
-
-                    if new_prices is None:
-                        new_prices = prices
-                    elif prices["min"] < new_prices["min"]:
-                        new_prices = prices
-                except KeyboardInterrupt:
-                    self.running = False
-                    return
-                except Exception as e:
-                    self.logger.info(f"{card.name}{padding} | Failed {str(e)}")
-                    # msg = "-- Script Error - {} - {} -- {} --".format(card, str(e), traceback.format_exc())
-                    sleep(get_sleep_time() * 3)
-                    continue
-                
-                if i + 1 < len(card.links):
-                    sleep(get_sleep_time())
-            if prices is None:
-                continue
+            new_prices = self.get_card_values(driver, card)
+            if new_prices is None:
+                return
 
             last_prices = card.last_data
             min_price = card.min_data
@@ -183,7 +182,7 @@ class MarketWatcher():
                         "market watcher",
                         msg,
                         alert=card.alert,
-                        link=cm_url,
+                        link=new_prices["url"],
                         channels=card.channels
                     )
 
@@ -211,30 +210,24 @@ class MarketWatcher():
         self.logger.info("Run Done")
 
     def single_run(self):
+        driver = webdriver.Chrome(options=CHROME_OPTIONS)
+        self.reload_db()
         try:
-            driver = webdriver.Chrome(options=CHROME_OPTIONS)
-            self.reload_db()
             self.single_run_main(driver)
         except KeyboardInterrupt:
             self.running = False
-        except Exception as e:
-            self.logger.info(f"general error {e}")
-            print(traceback.format_exc())
-            msg = "-- Script General Error -  {} --".format(str(e))
-            self.send_alert(message=msg, alert=["discord"], channels=["default"])
-        try:
-            driver.close()
-            driver.quit()
-        except Exception as e:
-            print(e)
+        
+        driver.quit()
     
     def run(self):
         self.logger.info("Starting MarketWatcher")
         self.running = True
         while self.running:
             self.single_run()
-            if self.running is False:
-                break
-            sleep(self._wait_time)
+            if self.running:
+                try:
+                    sleep(self._wait_time)
+                except KeyboardInterrupt:
+                    self.running = False
         
         self.logger.info("Stopping MarketWatcher")
