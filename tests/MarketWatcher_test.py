@@ -41,6 +41,17 @@ class MockDriver():
         elif xpath == xp.padding_check[0]:
             return MockElement(xp.padding_check[1], "anything" if self.padding else "available items")
 
+def mock_single_run(self):
+    self.count += 1
+    if self.count == 2:
+        self.running = False
+
+def raise_exception(*args):
+    raise Exception("test")
+
+def raise_keyboard_interupt(*args):
+    raise KeyboardInterrupt("test")
+
 class TestMarketWatcher(unittest.TestCase):  
     @patch("src.MarketWatcher.get_cards_location", return_value="tests/testdata/cards.json")
     @patch("src.MarketWatcher.get_data_location", return_value="tests/testdata/data.json")
@@ -117,6 +128,62 @@ class TestMarketWatcher(unittest.TestCase):
             MarketWatcher.create_cardmarket_link("Magic", "card", "any", "2", "3"),
             "https://www.cardmarket.com/en/Magic/Cards/card?minCondition=2&sellerCountry=3"
         )
+    
+    @patch("src.MarketWatcher.MarketWatcher.reload_db")
+    @patch("src.MarketWatcher.MarketWatcher.single_run", mock_single_run)
+    @patch("src.MarketWatcher.sleep")
+    def test_run(self, mock_sleep, *args):
+        market_watcher = MarketWatcher()
+        market_watcher.count = 0
+        market_watcher.logger.info = MagicMock()
         
+        market_watcher.logger.info.assert_not_called()
+        market_watcher.run()
+        self.assertEqual(market_watcher.logger.info.call_count, 2)
+        self.assertEqual(market_watcher.count, 2)
+        self.assertEqual(mock_sleep.call_count, 1)
+    
+    @patch("src.MarketWatcher.MarketWatcher.reload_db")
+    @patch("src.MarketWatcher.MarketWatcher.send_alert")
+    @patch("src.MarketWatcher.MarketWatcher.single_run_main")
+    @patch("src.MarketWatcher.webdriver.Chrome")
+    def test_single_run(self, mock_driver, *args):
+        driver = MagicMock()
+        mock_driver.return_value = driver
+        market_watcher = MarketWatcher()
+        market_watcher.logger.info = MagicMock()
+        market_watcher.running = True
+        market_watcher.single_run()
+
+        self.assertEqual(mock_driver.call_count, 1)
+        self.assertEqual(driver.close.call_count, 1)
+        self.assertEqual(driver.quit.call_count, 1)
+        self.assertTrue(market_watcher.running)
+        self.assertEqual(market_watcher.logger.info.call_count, 0)
+        self.assertEqual(market_watcher.send_alert.call_count, 0)
+
+        market_watcher.single_run_main = raise_exception
+        market_watcher.single_run()
+
+        self.assertEqual(mock_driver.call_count, 2)
+        self.assertEqual(driver.close.call_count, 2)
+        self.assertEqual(driver.quit.call_count, 2)
+        self.assertTrue(market_watcher.running)
+        self.assertEqual(market_watcher.logger.info.call_count, 1)
+        self.assertEqual(market_watcher.send_alert.call_count, 1)
+
+        market_watcher.single_run_main = raise_keyboard_interupt
+        driver.quit = raise_exception
+        market_watcher.single_run()
+
+        self.assertEqual(mock_driver.call_count, 3)
+        self.assertEqual(driver.close.call_count, 3)
+        self.assertFalse(market_watcher.running)
+        self.assertEqual(market_watcher.logger.info.call_count, 1)
+        self.assertEqual(market_watcher.send_alert.call_count, 1)
+
+
+
+
 
         
