@@ -79,3 +79,9 @@ def pretty_price(price):
 
 def get_formatted_time():
     return ":".join(str(datetime.now()).split(":")[:2])
+
+def get_cards_location():
+    return "data/cards.json"
+
+def get_data_location():
+    return "data/data.json"

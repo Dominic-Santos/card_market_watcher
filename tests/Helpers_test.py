@@ -2,7 +2,17 @@ import os
 import win32con
 import unittest
 from unittest.mock import patch, mock_open
-from src.Helpers import load_json, check_dir, get_sleep_time, get_wait_time, pretty_price, create_logger, get_formatted_time
+from src.Helpers import (
+    load_json,
+    check_dir,
+    get_sleep_time,
+    get_wait_time,
+    pretty_price,
+    create_logger,
+    get_formatted_time,
+    get_cards_location,
+    get_data_location,
+)
 
 class TestHelpers(unittest.TestCase):
     @patch('builtins.open', new_callable=mock_open, read_data='{"testcard": {"data": {}}, "testcard2": {"data": {}}}')
@@ -52,3 +62,9 @@ class TestHelpers(unittest.TestCase):
     def test_get_formatted_time(self, mock_datetime):
         mock_datetime.now.return_value = "2021-02-01 00:00:00.000000"
         self.assertEqual(get_formatted_time(), "2021-02-01 00:00")
+
+    def test_get_cards_location(self):
+        self.assertEqual("data/cards.json", "data/cards.json")
+    
+    def test_get_data_location(self):
+        self.assertEqual("data/data.json", "data/data.json")

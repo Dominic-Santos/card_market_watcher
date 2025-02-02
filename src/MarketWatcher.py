@@ -1,7 +1,17 @@
 from .Discord import Discord
 from .Config import Config
-from .Helpers import pc_alert, create_logger, get_wait_time, get_sleep_time, pretty_price, get_formatted_time
+from .Helpers import (
+    pc_alert,
+    create_logger,
+    get_wait_time,
+    get_sleep_time,
+    pretty_price,
+    get_formatted_time,
+    get_cards_location,
+    get_data_location,
+)
 from .CardDatabase import CardDatabase
+from .XPath import XPath
 from time import sleep
 import traceback
 from selenium import webdriver
@@ -11,7 +21,6 @@ from selenium.webdriver.common.by import By
 CHROME_OPTIONS = Options()
 CHROME_OPTIONS.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-
 class MarketWatcher():
     def __init__(self):
         self.logger = create_logger("MarketWatcher", "logs/market_watcher.log")
@@ -19,7 +28,7 @@ class MarketWatcher():
         self.discord = Discord(self.config.discord_token)
         self.running = False
         self._wait_time = get_wait_time()
-        self.card_db = CardDatabase("data/cards.json", "data/data.json")
+        self.card_db = CardDatabase(get_cards_location(), get_data_location())
         self.reload_db()
 
     def reload_db(self):
@@ -42,68 +51,21 @@ class MarketWatcher():
             try:
                 driver.get(cm_url)
                 sleep(0.5)
+
+                check = driver.find_element(By.XPATH, XPath.padding_check[0]).get_attribute(XPath.padding_check[1]).strip()
                 
-                if "/Cards/" in cm_url:
-                    # any version of the card
+                padding = check.lower() != "available items"
+                any_version = "/Cards/" in cm_url
+                product = "Magic" if "/Magic/" in cm_url else "Other"
 
-                    # trend price
-                    trend_price_path = '//div[contains(@class, "infoContainer")]/dl/dd[4]/span'
-                    trend_price = driver.find_element(By.XPATH, trend_price_path).get_attribute("innerHTML").strip()
+                xpath = XPath(product, any_version=any_version, padding=padding)
 
-                    # price min
-                    from_price_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[4]/div[1]/div/div/span'
-                    from_price = driver.find_element(By.XPATH, from_price_path).get_attribute("innerHTML").strip()
-
-                    # seller location country
-                    seller_location_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div[1]/div[1]/span/span/span[2]'
-                    seller_location = driver.find_element(By.XPATH, seller_location_path).get_attribute("aria-label").split(": ")[1].strip()
-
-                    # version of the card
-                    version_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div/div[2]/div/div/a[1]'
-                    version = driver.find_element(By.XPATH, version_path).get_attribute("aria-label").strip()
-
-                    # card condition
-                    card_condition_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div/div[2]/div/div/a[2]'
-                    card_condition = driver.find_element(By.XPATH, card_condition_path).get_attribute("data-bs-original-title").strip()
-
-                    # card language
-                    card_language_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div/div[2]/div/div/span'
-                    card_language = driver.find_element(By.XPATH, card_language_path).get_attribute("aria-label").strip()
-
-                else:
-                    # single version of card
-
-                    # trend price
-                    xpath_prefix = '//div[@id="tabContent-info"]/div/div[@class="col-12 col-lg-6 mx-auto"]/div/div[2]/dl/'
-                    check = driver.find_element(By.XPATH, xpath_prefix + 'dt[4]').get_attribute("innerHTML").strip()
-                    if check.lower() == "available items":
-                        version_path = xpath_prefix + 'dd[2]/div/a'
-                        trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[6]/span').get_attribute("innerHTML").strip()
-                    else:
-                        version_path = xpath_prefix + 'dd[3]/div/a'
-                        trend_price = driver.find_element(By.XPATH, xpath_prefix + 'dd[7]/span').get_attribute("innerHTML").strip()
-
-                    if "/Magic/" in cm_url:
-                        version_path += "[2]"
-                    
-                    # price min
-                    from_price_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[3]/div[1]/div[1]/div[1]/span'
-                    from_price = driver.find_element(By.XPATH, from_price_path).get_attribute("innerHTML").strip()
-
-                    # version of the card
-                    version = driver.find_element(By.XPATH, version_path).get_attribute("innerHTML").strip()
-
-                    # seller location country
-                    seller_location_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[2]/div[1]/div[1]/span/span/span[2]'
-                    seller_location = driver.find_element(By.XPATH, seller_location_path).get_attribute("aria-label").split(": ")[1].strip()
-
-                    # card condition
-                    card_condition_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[2]/div[1]/div[2]/div/div[1]/a'
-                    card_condition = driver.find_element(By.XPATH, card_condition_path).get_attribute("data-bs-original-title").strip()
-
-                    # card language
-                    card_language_path = '//div[contains(@class, "article-table")]/div[@class="table-body"]/div[1]/div[2]/div[1]/div[2]/div/div[1]/span'
-                    card_language = driver.find_element(By.XPATH, card_language_path).get_attribute("aria-label").strip()
+                trend_price = driver.find_element(By.XPATH, xpath.trend_price[0]).get_attribute(xpath.trend_price[1]).strip()
+                from_price = driver.find_element(By.XPATH, xpath.lowest_price[0]).get_attribute(xpath.lowest_price[1]).strip()
+                seller_location = driver.find_element(By.XPATH, xpath.seller_location[0]).get_attribute(xpath.seller_location[1]).split(": ")[1].strip()
+                version = driver.find_element(By.XPATH, xpath.card_version[0]).get_attribute(xpath.card_version[1]).strip()
+                card_condition = driver.find_element(By.XPATH, xpath.card_condition[0]).get_attribute(xpath.card_condition[1]).strip()
+                card_language = driver.find_element(By.XPATH, xpath.card_language[0]).get_attribute(xpath.card_language[1]).strip()
 
             except Exception as e:
                 print("get price exception", e)
