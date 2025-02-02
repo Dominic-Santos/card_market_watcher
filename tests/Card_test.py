@@ -33,7 +33,7 @@ class TestCard(unittest.TestCase):
         self.assertEqual(card.note, "")
         self.assertEqual(card.alert, [])
         self.assertEqual(card.product, "Digimon")
-        self.assertEqual(card.condition, "2")
+        self.assertEqual(card.condition, "any")
         self.assertEqual(card.language, "any")
         self.assertEqual(card.channels, ["default"])
         self.assertEqual(card.seller_location, "1,2,3,33,35,5,6,8,9,11,12,7,14,15,37,16,17,36,21,18,19,20,22,23,24,25,26,27,29,31,30,10,28,4")

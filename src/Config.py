@@ -32,4 +32,4 @@ class Config:
         return list(self._config["discord_channels"].keys())
 
     def discord_channel_by_name(self, name: str):
-        return self._config["discord_channels"][name]
+        return self._config["discord_channels"].get(name, "")

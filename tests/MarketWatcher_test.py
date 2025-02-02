@@ -118,15 +118,15 @@ class TestMarketWatcher(unittest.TestCase):
     def test_create_cardmarket_link(self):
         self.assertEqual(
             MarketWatcher.create_cardmarket_link("Magic", "cardversion/card", "1", "2", "3"),
-            "https://www.cardmarket.com/en/Magic/Products/Singles/cardversion/card?minCondition=2&sellerCountry=3&language=1"
+            "https://www.cardmarket.com/en/Magic/Products/Singles/cardversion/card?sellerCountry=3&language=1&minCondition=2"
         )
         self.assertEqual(
             MarketWatcher.create_cardmarket_link("Magic", "cardversion/card", "any", "2", "3"),
-            "https://www.cardmarket.com/en/Magic/Products/Singles/cardversion/card?minCondition=2&sellerCountry=3"
+            "https://www.cardmarket.com/en/Magic/Products/Singles/cardversion/card?sellerCountry=3&minCondition=2"
         )
         self.assertEqual(
-            MarketWatcher.create_cardmarket_link("Magic", "card", "any", "2", "3"),
-            "https://www.cardmarket.com/en/Magic/Cards/card?minCondition=2&sellerCountry=3"
+            MarketWatcher.create_cardmarket_link("Magic", "card", "any", "any", "3"),
+            "https://www.cardmarket.com/en/Magic/Cards/card?sellerCountry=3"
         )
     
     @patch("src.MarketWatcher.MarketWatcher.reload_db")
