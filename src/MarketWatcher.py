@@ -45,18 +45,21 @@ class MarketWatcher():
         if "pc" in alert:
             pc_alert(title, message, link)
     
-    def get_card_market_values(self, driver, cm_url):
+    @staticmethod
+    def get_card_market_values(driver, cm_url):
         retry_limit = 1
         for i in range(retry_limit + 1):
             try:
                 driver.get(cm_url)
                 sleep(0.5)
 
-                check = driver.find_element(By.XPATH, XPath.padding_check[0]).get_attribute(XPath.padding_check[1]).strip()
-                
-                padding = check.lower() != "available items"
                 any_version = "/Cards/" in cm_url
                 product = "Magic" if "/Magic/" in cm_url else "Other"
+                if any_version:
+                    padding = False
+                else:
+                    check = driver.find_element(By.XPATH, XPath.padding_check[0]).get_attribute(XPath.padding_check[1]).strip()
+                    padding = check.lower() != "available items"
 
                 xpath = XPath(product, any_version=any_version, padding=padding)
 
@@ -75,6 +78,10 @@ class MarketWatcher():
                     continue
                 trend_price = ""
                 from_price = ""
+                seller_location = ""
+                version = ""
+                card_condition = ""
+                card_language = ""
             break
 
         min_price = 0

@@ -48,7 +48,7 @@ class CardDatabase():
         return max(len(card.name) for card in self.cards)
     
     def sort_cards(self):
-        self.cards.sort(key=lambda card: card.order)
+        self.cards.sort(key=lambda card: (card.order, card.name))
     
     @property
     def card_names(self):
