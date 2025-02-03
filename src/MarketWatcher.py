@@ -141,6 +141,47 @@ class MarketWatcher():
             if i + 1 < len(card.links):
                 sleep(get_sleep_time())
         return new_prices
+    
+    @staticmethod
+    def get_price_change_message(card, new_prices: dict, max_length: int):
+        last_prices = card.last_data
+        min_price = card.min_data
+        msg = None
+
+        to_log = "{card}{padding} | Low {lowest} | Min {minimum}, Avg {average}".format(
+            card=card.name,
+            padding=" " * (max(max_length, len(card.name)) - len(card.name)),
+            minimum=pretty_price(last_prices["min"]),
+            average=pretty_price(last_prices["avg"]),
+            lowest=pretty_price(min_price)
+        )
+
+        if last_prices["min"] != new_prices["min"] or last_prices["avg"] != new_prices["avg"]:
+
+            if new_prices["min"] < last_prices["min"] or last_prices["min"] == 0:
+                compare = "Down"
+                msg = "%s went down, is currently %s" % (
+                    card.name,
+                    new_prices["min"]
+                )
+                if new_prices["min"] <= min_price:
+                    msg += ", lowest seen" if new_prices["min"] == min_price else ", NEW LOWEST!!!"
+
+                msg += f"\n(lowest seen: {min_price})"
+                msg += f"\n{new_prices['version']}\n[{new_prices['condition']}] {new_prices['language']} from {new_prices['seller_location']}"
+
+            elif new_prices["min"] == last_prices["min"] and new_prices["avg"] < last_prices["avg"]:
+                compare = "Down"
+            else:
+                compare = " Up "
+
+            to_log = "{start} | {compare} | Min {new_mininum}, Avg {new_average}".format(
+                start=to_log,
+                compare=compare,
+                new_mininum=pretty_price(new_prices["min"]),
+                new_average=pretty_price(new_prices["avg"]),
+            )
+        return msg, to_log
 
     def single_run_main(self, driver):
         longest_card = self.card_db.longest_card_name
@@ -153,58 +194,24 @@ class MarketWatcher():
             new_prices = self.get_card_values(driver, card)
             if new_prices is None:
                 return
-
-            last_prices = card.last_data
-            min_price = card.min_data
-
-            to_log = "{card}{padding} | Low {lowest} | Min {minimum}, Avg {average}".format(
-                card=card.name,
-                padding=" " * (longest_card - len(card.name)),
-                minimum=pretty_price(last_prices["min"]),
-                average=pretty_price(last_prices["avg"]),
-                lowest=pretty_price(min_price)
-            )
-
-            if last_prices["min"] != new_prices["min"] or last_prices["avg"] != new_prices["avg"]:
-
-                if new_prices["min"] < last_prices["min"] or last_prices["min"] == 0:
-                    compare = "Down"
-                    msg = "%s went down, is currently %s" % (
-                        card.name,
-                        new_prices["min"]
-                    )
-                    if new_prices["min"] <= min_price:
-                        msg += ", lowest seen" if new_prices["min"] == min_price else ", NEW LOWEST!!!"
-
-                    msg += f"\n(lowest seen: {min_price})"
-                    msg += f"\n{new_prices['version']}\n[{new_prices['condition']}] {new_prices['language']} from {new_prices['seller_location']}"
-                    self.send_alert(
-                        "market watcher",
-                        msg,
-                        alert=card.alert,
-                        link=new_prices["url"],
-                        channels=card.channels
-                    )
-
-                elif new_prices["min"] == last_prices["min"] and new_prices["avg"] < last_prices["avg"]:
-                    compare = "Down"
-                else:
-                    compare = " Up "
+            
+            msg, to_log = self.get_price_change_message(card, new_prices, longest_card)
+            if msg is not None:
+                self.send_alert(
+                    "market watcher",
+                    msg,
+                    alert=card.alert,
+                    link=new_prices["url"],
+                    channels=card.channels
+                )
 
                 card.data[get_formatted_time()] = {
                     "min": new_prices["min"],
                     "avg": new_prices["avg"],
                 }
-                to_log = "{start} | {compare} | Min {new_mininum}, Avg {new_average}".format(
-                    start=to_log,
-                    compare=compare,
-                    new_mininum=pretty_price(new_prices["min"]),
-                    new_average=pretty_price(new_prices["avg"]),
-                )
                 self.card_db.save_data()
 
             self.logger.info(to_log)
-        
             sleep(get_sleep_time())
 
         self.logger.info("Run Done")

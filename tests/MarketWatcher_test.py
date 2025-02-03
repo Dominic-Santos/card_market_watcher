@@ -222,4 +222,88 @@ class TestMarketWatcher(unittest.TestCase):
         values = market_watcher.get_card_values(None, card)
         self.assertEqual(mock_get_values.call_count, 4)
         self.assertEqual(mock_sleep.call_count, 1)
-        
+    
+    @patch("src.MarketWatcher.MarketWatcher.reload_db")
+    def test_get_price_change_message(self, *args):
+        market_watcher = MarketWatcher()
+        fields = {
+            "links": ["http://example.com", "http://example2.com"],
+            "note": "Test note",
+            "alert": ["pc", "discord"],
+            "product": "Pokemon",
+            "condition": "1",
+            "language": "2",
+            "channels": ["email", "sms"],
+            "seller": "1"
+        }
+        card = Card("testcard", fields)
+        card.data = {
+            "2021-01-01": {"min": 1, "avg": 2},
+            "2021-01-02": {"min": 2, "avg": 3},
+            "2021-01-03": {"min": 3, "avg": 4},
+        }
+
+        msg, log = market_watcher.get_price_change_message(card, {"min": 3, "avg": 4}, 0)
+        self.assertIsNone(msg)
+        self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00")
+
+        msg, log = market_watcher.get_price_change_message(card, {"min": 1, "avg": 2, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertEqual(msg, "testcard went down, is currently 1, lowest seen\n(lowest seen: 1)\nver\n[mang] bleh from nope")
+        self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00 | Down | Min 01.00, Avg 02.00" )
+
+        _, log = market_watcher.get_price_change_message(card, {"min": 3, "avg": 3, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00 | Down | Min 03.00, Avg 03.00" )
+
+        _, log = market_watcher.get_price_change_message(card, {"min": 5, "avg": 5, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00 |  Up  | Min 05.00, Avg 05.00" )
+
+        msg, _ = market_watcher.get_price_change_message(card, {"min": 0.5, "avg": 2, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertEqual(msg, "testcard went down, is currently 0.5, NEW LOWEST!!!\n(lowest seen: 1)\nver\n[mang] bleh from nope")
+
+    
+    @patch("src.MarketWatcher.MarketWatcher.reload_db")
+    @patch("src.MarketWatcher.sleep")
+    @patch("src.MarketWatcher.CardDatabase.save_data")
+    @patch("src.MarketWatcher.MarketWatcher.send_alert")
+    @patch("src.MarketWatcher.MarketWatcher.get_price_change_message")
+    @patch("src.MarketWatcher.MarketWatcher.get_card_values")
+    def test_single_run_main(self, mock_card_value, mock_get_message, *args):
+        market_watcher = MarketWatcher()
+        market_watcher.logger.info = MagicMock()
+        fields = {
+            "links": ["http://example.com", "http://example2.com"],
+            "note": "Test note",
+            "alert": ["pc", "discord"],
+            "product": "Pokemon",
+            "condition": "1",
+            "language": "2",
+            "channels": ["email", "sms"],
+            "seller": "1"
+        }
+        card = Card("testcard", fields)
+        card.data = {
+            "2021-01-01": {"min": 1, "avg": 2},
+            "2021-01-02": {"min": 2, "avg": 3},
+            "2021-01-03": {"min": 3, "avg": 4},
+        }
+        market_watcher.card_db.cards = [card]
+
+        mock_card_value.return_value = None
+        market_watcher.single_run_main(None)
+        self.assertEqual(mock_get_message.call_count, 0)
+
+        mock_card_value.return_value = {"min": 0.5, "avg": 0.75, "url": "www.test.com"}
+        mock_get_message.return_value = (None, "something else")
+        market_watcher.single_run_main(None)
+        self.assertEqual(mock_get_message.call_count, 1)
+        self.assertEqual(market_watcher.send_alert.call_count, 0)
+
+        mock_get_message.return_value = ("something", "something else")
+        market_watcher.single_run_main(None)
+        self.assertEqual(mock_get_message.call_count, 2)
+        self.assertEqual(market_watcher.send_alert.call_count, 1)
+        self.assertEqual(market_watcher.card_db.save_data.call_count, 1)
+        self.assertEqual(len(card.data.keys()), 4)
+        self.assertEqual(card.last_data["min"], 0.5)
+        self.assertEqual(card.last_data["avg"], 0.75)
+        self.assertEqual(card.min_data, 0.5)
