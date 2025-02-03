@@ -185,7 +185,7 @@ class TestMarketWatcher(unittest.TestCase):
         market_watcher.single_run()
 
         self.assertEqual(mock_driver.call_count, 2)
-        self.assertEqual(driver.quit.call_count, 2)
+        self.assertEqual(driver.quit.call_count, 1)
         self.assertFalse(market_watcher.running)
     
     @patch("src.MarketWatcher.MarketWatcher.reload_db")

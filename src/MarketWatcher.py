@@ -49,10 +49,9 @@ class MarketWatcher():
     def get_card_market_values(driver, cm_url):
         retry_limit = 1
         for i in range(retry_limit + 1):
+            driver.get(cm_url)
+            sleep(0.5)
             try:
-                driver.get(cm_url)
-                sleep(0.5)
-
                 any_version = "/Cards/" in cm_url
                 product = "Magic" if "/Magic/" in cm_url else "Other"
                 if any_version:
@@ -223,8 +222,8 @@ class MarketWatcher():
             self.single_run_main(driver)
         except KeyboardInterrupt:
             self.running = False
-        
-        driver.quit()
+        else:
+            driver.quit()
     
     def run(self):
         self.logger.info("Starting MarketWatcher")
