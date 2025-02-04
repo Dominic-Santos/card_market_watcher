@@ -1,6 +1,6 @@
 {
     "discord_token": null,
-    "discord_username": "username",
+    "discord_id": null,
     "discord_channels": {
         "default": null
     }
