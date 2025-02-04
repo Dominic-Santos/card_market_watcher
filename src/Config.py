@@ -11,6 +11,7 @@ class Config:
         raw_config = load_json(CONFIG_FILE)
         self._config = {
             "discord_token": raw_config.get("discord_token", None),
+            "discord_username": raw_config.get("discord_username", None),
             "discord_channels": raw_config.get("discord_channels", {
                 "default": None
             }),
@@ -22,7 +23,11 @@ class Config:
     @property
     def discord_token(self):
         return self._config["discord_token"]
-    
+
+    @property
+    def discord_username(self):
+        return self._config["discord_username"]
+
     @property
     def discord_channels(self):
         return self._config["discord_channels"]
