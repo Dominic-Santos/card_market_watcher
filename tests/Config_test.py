@@ -10,7 +10,7 @@ class TestConfig(unittest.TestCase):
     def test_config(self, mock_load_json, *args):
         mock_load_json.return_value = {
             "discord_token": "test_token",
-            "discord_username": "test_username",
+            "discord_id": "test_id",
             "discord_channels": {
                 "default": "test_channel"
             }
@@ -20,4 +20,4 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.discord_channels, {"default": "test_channel"})
         self.assertEqual(config.discord_channel_names, ["default"])
         self.assertEqual(config.discord_channel_by_name("default"), "test_channel")
-        self.assertEqual(config.discord_username, "test_username")
+        self.assertEqual(config.discord_id, "test_id")
