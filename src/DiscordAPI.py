@@ -40,3 +40,9 @@ class DiscordAPI(object):
             r = requests.delete(url, headers=self.get_headers())
             return r.status_code == 204  # all went good
         return False
+
+    def put(self, url):
+        if self.check_can_send():
+            r = requests.put(url, headers=self.get_headers())
+            return r.status_code == 204  # all went good
+        return False

@@ -6,11 +6,12 @@ from src.Discord import Discord
 TEST_AUTH_TOKEN = "test_token"
 
 class MockResponse:
-    def __init__(self, status_code):
+    def __init__(self, status_code, json_data=None):
         self.status_code = status_code
+        self._json = {"status": self.status_code} if json_data is None else json_data
     
     def json(self):
-        return {"status": self.status_code}
+        return self._json
 
 class TestDiscord(unittest.TestCase):
     @patch("src.Discord.DiscordAPI.post")
@@ -60,3 +61,23 @@ class TestDiscord(unittest.TestCase):
         self.assertTrue(discord.delete("test_url"))
         discord = Discord()
         self.assertFalse(discord.delete("test_url"))
+
+    @patch("src.DiscordAPI.requests.put")
+    def test_put(self, mock_put):
+        mock_put.return_value = MockResponse(204)
+        discord = Discord(TEST_AUTH_TOKEN)
+        self.assertTrue(discord.put("test_url"))
+        discord = Discord()
+        self.assertFalse(discord.put("test_url"))
+    
+    @patch("src.DiscordAPI.requests.put")
+    def test_react_to_message(self, mock_put):
+        mock_put.return_value = MockResponse(204)
+        discord = Discord(TEST_AUTH_TOKEN)
+        self.assertTrue(discord.react_to_message("cross", "123", "message_id"))
+
+    @patch("src.DiscordAPI.requests.get")
+    def test_get_message_reaction_users(self, mock_get):
+        mock_get.return_value = MockResponse(200, json_data=[])
+        discord = Discord(TEST_AUTH_TOKEN)
+        self.assertEqual(discord.get_message_reaction_users("cross", "channel_id", "message_id"), [])
