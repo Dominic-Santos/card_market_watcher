@@ -243,21 +243,26 @@ class TestMarketWatcher(unittest.TestCase):
             "2021-01-03": {"min": 3, "avg": 4},
         }
 
-        msg, log = market_watcher.get_price_change_message(card, {"min": 3, "avg": 4}, 0)
+        changes, msg, log = market_watcher.get_price_change_message(card, {"min": 3, "avg": 4}, 0)
+        self.assertFalse(changes)
         self.assertIsNone(msg)
         self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00")
 
-        msg, log = market_watcher.get_price_change_message(card, {"min": 1, "avg": 2, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        changes, msg, log = market_watcher.get_price_change_message(card, {"min": 1, "avg": 2, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertTrue(changes)
         self.assertEqual(msg, "testcard went down, is currently 1, lowest seen\n(lowest seen: 1)\nver\n[mang] bleh from nope")
         self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00 | Down | Min 01.00, Avg 02.00" )
 
-        _, log = market_watcher.get_price_change_message(card, {"min": 3, "avg": 3, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        changes, _, log = market_watcher.get_price_change_message(card, {"min": 3, "avg": 3, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertTrue(changes)
         self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00 | Down | Min 03.00, Avg 03.00" )
 
-        _, log = market_watcher.get_price_change_message(card, {"min": 5, "avg": 5, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        changes, _, log = market_watcher.get_price_change_message(card, {"min": 5, "avg": 5, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertTrue(changes)
         self.assertEqual(log, "testcard | Low 01.00 | Min 03.00, Avg 04.00 |  Up  | Min 05.00, Avg 05.00" )
 
-        msg, _ = market_watcher.get_price_change_message(card, {"min": 0.5, "avg": 2, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        changes, msg, _ = market_watcher.get_price_change_message(card, {"min": 0.5, "avg": 2, "version": "ver", "condition": "mang", "language": "bleh", "seller_location": "nope"}, 0)
+        self.assertTrue(changes)
         self.assertEqual(msg, "testcard went down, is currently 0.5, NEW LOWEST!!!\n(lowest seen: 1)\nver\n[mang] bleh from nope")
 
     
@@ -293,12 +298,12 @@ class TestMarketWatcher(unittest.TestCase):
         self.assertEqual(mock_get_message.call_count, 0)
 
         mock_card_value.return_value = {"min": 0.5, "avg": 0.75, "url": "www.test.com"}
-        mock_get_message.return_value = (None, "something else")
+        mock_get_message.return_value = (False, None, "something else")
         market_watcher.single_run_main(None)
         self.assertEqual(mock_get_message.call_count, 1)
         self.assertEqual(market_watcher.send_alert.call_count, 0)
 
-        mock_get_message.return_value = ("something", "something else")
+        mock_get_message.return_value = (True, "something", "something else")
         market_watcher.single_run_main(None)
         self.assertEqual(mock_get_message.call_count, 2)
         self.assertEqual(market_watcher.send_alert.call_count, 1)

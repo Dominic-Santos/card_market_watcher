@@ -155,7 +155,9 @@ class MarketWatcher():
             lowest=pretty_price(min_price)
         )
 
-        if last_prices["min"] != new_prices["min"] or last_prices["avg"] != new_prices["avg"]:
+        changes = last_prices["min"] != new_prices["min"] or last_prices["avg"] != new_prices["avg"]
+
+        if changes:
 
             if new_prices["min"] < last_prices["min"] or last_prices["min"] == 0:
                 compare = "Down"
@@ -180,7 +182,7 @@ class MarketWatcher():
                 new_mininum=pretty_price(new_prices["min"]),
                 new_average=pretty_price(new_prices["avg"]),
             )
-        return msg, to_log
+        return changes, msg, to_log
 
     def single_run_main(self, driver):
         longest_card = self.card_db.longest_card_name
@@ -194,16 +196,19 @@ class MarketWatcher():
             if new_prices is None:
                 return
             
-            msg, to_log = self.get_price_change_message(card, new_prices, longest_card)
-            if msg is not None:
-                self.send_alert(
-                    "market watcher",
-                    msg,
-                    alert=card.alert,
-                    link=new_prices["url"],
-                    channels=card.channels
-                )
+            changes, msg, to_log = self.get_price_change_message(card, new_prices, longest_card)
+            print(changes)
+            if changes:
+                if msg is not None:
+                    self.send_alert(
+                        "market watcher",
+                        msg,
+                        alert=card.alert,
+                        link=new_prices["url"],
+                        channels=card.channels
+                    )
 
+                print(new_prices)
                 card.data[get_formatted_time()] = {
                     "min": new_prices["min"],
                     "avg": new_prices["avg"],
