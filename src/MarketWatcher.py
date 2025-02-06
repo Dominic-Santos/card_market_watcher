@@ -197,7 +197,6 @@ class MarketWatcher():
                 return
             
             changes, msg, to_log = self.get_price_change_message(card, new_prices, longest_card)
-            print(changes)
             if changes:
                 if msg is not None:
                     self.send_alert(
@@ -208,7 +207,6 @@ class MarketWatcher():
                         channels=card.channels
                     )
 
-                print(new_prices)
                 card.data[get_formatted_time()] = {
                     "min": new_prices["min"],
                     "avg": new_prices["avg"],
