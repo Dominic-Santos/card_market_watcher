@@ -220,6 +220,7 @@ class MarketWatcher():
 
     def single_run(self):
         driver = webdriver.Chrome(options=CHROME_OPTIONS)
+        driver.set_window_position(-2000,0)
         self.reload_db()
         try:
             self.single_run_main(driver)
