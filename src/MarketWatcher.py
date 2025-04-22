@@ -129,6 +129,7 @@ class MarketWatcher():
             if prices is None:
                 self.running = False
                 return
+
             if prices["min"] == 0:
                 raise Exception("no price found")
 
@@ -192,7 +193,16 @@ class MarketWatcher():
         self.logger.info(f"{cards}, {len(cards)}")
 
         for card in self.card_db.cards:
-            new_prices = self.get_card_values(driver, card)
+            try:
+                new_prices = self.get_card_values(driver, card)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            except:
+                print("get card values exception", card.name)
+                print(traceback.format_exc())
+                sleep(get_sleep_time())
+                continue
+
             if new_prices is None:
                 return
             
@@ -219,13 +229,15 @@ class MarketWatcher():
         self.logger.info("Run Done")
 
     def single_run(self):
-        driver = webdriver.Chrome(options=CHROME_OPTIONS)
-        driver.minimize_window()
-        self.reload_db()
         try:
+            driver = webdriver.Chrome(options=CHROME_OPTIONS)
+            driver.minimize_window()
+            self.reload_db()
             self.single_run_main(driver)
         except KeyboardInterrupt:
             self.running = False
+        except:
+            pass
         else:
             driver.quit()
     

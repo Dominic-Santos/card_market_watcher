@@ -53,6 +53,9 @@ def mock_single_run(self):
 def raise_keyboard_interupt(*args):
     raise KeyboardInterrupt("test")
 
+def raise_test_exception(*args):
+    raise Exception("test")
+
 class TestMarketWatcher(unittest.TestCase):  
     @patch("src.MarketWatcher.get_cards_location", return_value="tests/testdata/cards.json")
     @patch("src.MarketWatcher.get_data_location", return_value="tests/testdata/data.json")
@@ -187,6 +190,14 @@ class TestMarketWatcher(unittest.TestCase):
         self.assertEqual(mock_driver.call_count, 2)
         self.assertEqual(driver.quit.call_count, 1)
         self.assertFalse(market_watcher.running)
+
+        market_watcher.single_run_main = raise_test_exception
+        market_watcher.running = True
+        market_watcher.single_run()
+
+        self.assertEqual(mock_driver.call_count, 3)
+        self.assertEqual(driver.quit.call_count, 1)
+
     
     @patch("src.MarketWatcher.MarketWatcher.reload_db")
     @patch("src.MarketWatcher.sleep")
@@ -312,3 +323,16 @@ class TestMarketWatcher(unittest.TestCase):
         self.assertEqual(card.last_data["min"], 0.5)
         self.assertEqual(card.last_data["avg"], 0.75)
         self.assertEqual(card.min_data, 0.5)
+
+        mock_card_value.side_effect = KeyboardInterrupt("test")
+        try:
+            market_watcher.single_run_main(None)
+        except KeyboardInterrupt:
+            pass
+        self.assertFalse(market_watcher.running)
+
+        market_watcher.running = True
+        mock_card_value.side_effect = Exception("test")
+        market_watcher.single_run_main(None)
+        self.assertTrue(market_watcher.running)
+        self.assertEqual(mock_get_message.call_count, 2)
